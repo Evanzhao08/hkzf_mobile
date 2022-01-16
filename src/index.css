@@ -1,6 +1,7 @@
 html,
 body {
-  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: Microsoft YaHei;
   color: #333;
   background-color: #fff;
@@ -8,4 +9,21 @@ body {
 
 * {
   box-sizing: border-box;
+  /* 去掉轮播图chrome 浏览器的错误警告 */
+  touch-action: pan-y;
+}
+
+h2,
+ul {
+  margin: 0;
+}
+ul {
+  list-style: none;
+}
+
+html,
+body,
+#root,
+.App {
+  height: 100%;
 }
