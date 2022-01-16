@@ -1,48 +1,46 @@
-import React, { Component } from 'react'
-import NavHeader from '../../components/NavHeader'
-
-import styles from './index.module.css'
-
-
+import React, { Component } from "react";
+import NavHeader from "../../components/NavHeader";
+import axios from "axios";
+import styles from "./index.module.css";
 
 // 解决脚手架中全局变量访问的问题
-const BMap = window.BMap
+const BMap = window.BMap;
 
 // 覆盖物样式
 const labelStyle = {
-    cursor: 'pointer',
-    border: '0px solid rgb(255, 0, 0)',
-    padding: '0px',
-    whiteSpace: 'nowrap',
-    fontSize: '12px',
-    color: 'rgb(255, 255, 255)',
-    textAlign: 'center'
-  }
+  cursor: "pointer",
+  border: "0px solid rgb(255, 0, 0)",
+  padding: "0px",
+  whiteSpace: "nowrap",
+  fontSize: "12px",
+  color: "rgb(255, 255, 255)",
+  textAlign: "center",
+};
 
 export default class Map extends Component {
-     componentDidMount() {
-           this.initMap();
-      }
-      // 初始化地图
+  componentDidMount() {
+    this.initMap();
+  }
+  // 初始化地图
   initMap() {
     // 获取当前定位城市
-    const { label, value } = JSON.parse(localStorage.getItem('hkzf_city'))
-    console.log(label, value)
+    const { label, value } = JSON.parse(localStorage.getItem("hkzf_city"));
+    //console.log(label, value)
 
     // 初始化地图实例
-    const map = new BMap.Map('container')
+    const map = new BMap.Map("container");
     // 创建地址解析器实例
-    const myGeo = new BMap.Geocoder()
+    const myGeo = new BMap.Geocoder();
     // 将地址解析结果显示在地图上，并调整地图视野
     myGeo.getPoint(
       label,
-      point => {
+      async (point) => {
         if (point) {
           //  初始化地图
-          map.centerAndZoom(point, 11)
+          map.centerAndZoom(point, 11);
           // 添加常用控件
-          map.addControl(new BMap.NavigationControl())
-          map.addControl(new BMap.ScaleControl())
+          map.addControl(new BMap.NavigationControl());
+          map.addControl(new BMap.ScaleControl());
 
           /* 
             1 调用 Label 的 setContent() 方法，传入 HTML 结构，修改 HTML 内容的样式。
@@ -54,44 +52,56 @@ export default class Map extends Component {
               <p>${num}套</p>
             </div>
           */
-          const opts = {
-            position: point,
-            offset: new BMap.Size(-35, -35)
-          }
 
+          const res = await axios.get(
+            `http://localhost:8080/area/map?id=${value}`
+          );
+          console.log("房源数据:", res.data.body);
+          res.data.body.forEach(item => {
+              const {coord:{latitude, longitude},label:areaName,count} = item
+         // console.log(latitude, longitude,areaName,count);
+          // 创建覆盖物
+          const areaPoint = new BMap.Point(longitude, latitude)
+          const opts = {
+            position: areaPoint,
+            offset: new BMap.Size(-35, -35),
+          };
           // 说明：设置 setContent 后，第一个参数中设置的文本内容就失效了，因此，直接清空即可
-          const label = new BMap.Label('', opts)
+          const label = new BMap.Label("", opts);
 
           // 设置房源覆盖物内容
           label.setContent(`
-            <div class="${styles.bubble}">
-              <p class="${styles.name}">浦东</p>
-              <p>99套</p>
-            </div>
-          `)
+          <div class="${styles.bubble}">
+            <p class="${styles.name}">${areaName}</p>
+            <p>${count}</p>
+          </div>
+        `);
 
           // 设置样式
-          label.setStyle(labelStyle)
+          label.setStyle(labelStyle);
 
           // 添加单击事件
-          label.addEventListener('click', () => {
-            console.log('房源覆盖物被点击了')
-          })
+          label.addEventListener("click", () => {
+            console.log("房源覆盖物被点击了");
+          });
 
           // 添加覆盖物到地图中
-          map.addOverlay(label)
+          map.addOverlay(label);
+         
+          });
+        
         }
       },
       label
-    )
+    );
   }
 
-    render() {
-        return (
-            <div className={styles.map}>
-                <NavHeader >地图找房</NavHeader>
-             <div id='container' className={styles.container} />
-            </div>
-        )
-    }
+  render() {
+    return (
+      <div className={styles.map}>
+        <NavHeader>地图找房</NavHeader>
+        <div id="container" className={styles.container} />
+      </div>
+    );
+  }
 }
