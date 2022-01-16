@@ -1,38 +1,96 @@
 import React, { Component } from 'react'
-import './index.scss'
+import NavHeader from '../../components/NavHeader'
+
+import styles from './index.module.css'
 
 
 
+// 解决脚手架中全局变量访问的问题
+const BMap = window.BMap
+
+// 覆盖物样式
+const labelStyle = {
+    cursor: 'pointer',
+    border: '0px solid rgb(255, 0, 0)',
+    padding: '0px',
+    whiteSpace: 'nowrap',
+    fontSize: '12px',
+    color: 'rgb(255, 255, 255)',
+    textAlign: 'center'
+  }
 
 export default class Map extends Component {
-
-    componentDidMount() {
-     /*    // 初始化地图实例
-        // 注意：在 react 脚手架中全局对象需要使用 window 来访问，否则，会造成 ESLint 校验错误
-        const map = new window.BMap.Map('container')
-        // 设置中心点坐标
-        const point = new window.BMap.Point(116.404, 39.915)
-        // 初始化地图
-        map.centerAndZoom(point, 15) */
-         //获取地理位置信息 
-          
-           //定义地图中心点坐标
-           var center = new window.TMap.LatLng(34.1856,108.4549)
-           //定义map变量，调用 TMap.Map() 构造函数创建地图
-           new window.TMap.Map(document.getElementById('container'), {
-               center: center,//设置地图中心点坐标
-               zoom: 10,   //设置地图缩放级别
-               pitch: 43.5,  //设置俯仰角
-               rotation: 45    //设置地图旋转角度
-           });
-
-           
+     componentDidMount() {
+           this.initMap();
       }
+      // 初始化地图
+  initMap() {
+    // 获取当前定位城市
+    const { label, value } = JSON.parse(localStorage.getItem('hkzf_city'))
+    console.log(label, value)
+
+    // 初始化地图实例
+    const map = new BMap.Map('container')
+    // 创建地址解析器实例
+    const myGeo = new BMap.Geocoder()
+    // 将地址解析结果显示在地图上，并调整地图视野
+    myGeo.getPoint(
+      label,
+      point => {
+        if (point) {
+          //  初始化地图
+          map.centerAndZoom(point, 11)
+          // 添加常用控件
+          map.addControl(new BMap.NavigationControl())
+          map.addControl(new BMap.ScaleControl())
+
+          /* 
+            1 调用 Label 的 setContent() 方法，传入 HTML 结构，修改 HTML 内容的样式。
+            2 调用 setStyle() 修改覆盖物样式。
+            3 给文本覆盖物添加单击事件。
+
+            <div class="${styles.bubble}">
+              <p class="${styles.name}">${name}</p>
+              <p>${num}套</p>
+            </div>
+          */
+          const opts = {
+            position: point,
+            offset: new BMap.Size(-35, -35)
+          }
+
+          // 说明：设置 setContent 后，第一个参数中设置的文本内容就失效了，因此，直接清空即可
+          const label = new BMap.Label('', opts)
+
+          // 设置房源覆盖物内容
+          label.setContent(`
+            <div class="${styles.bubble}">
+              <p class="${styles.name}">浦东</p>
+              <p>99套</p>
+            </div>
+          `)
+
+          // 设置样式
+          label.setStyle(labelStyle)
+
+          // 添加单击事件
+          label.addEventListener('click', () => {
+            console.log('房源覆盖物被点击了')
+          })
+
+          // 添加覆盖物到地图中
+          map.addOverlay(label)
+        }
+      },
+      label
+    )
+  }
 
     render() {
         return (
-            <div className='map'>
-             <div id="container" />
+            <div className={styles.map}>
+                <NavHeader >地图找房</NavHeader>
+             <div id='container' className={styles.container} />
             </div>
         )
     }

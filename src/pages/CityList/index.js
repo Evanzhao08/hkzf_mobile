@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import {AutoSizer, List} from 'react-virtualized';
-import { NavBar, Toast } from "antd-mobile";
-
+import {Toast } from "antd-mobile";
+import NavHeader from '../../components/NavHeader'
 import axios from "axios";
 import {getCurrentCity} from '../../utils'
 import "./index.scss";
@@ -47,6 +47,9 @@ const TITLE_HEIGHT = 36
 //每个城市高度 
 const NAME_HEIGHT = 50
 
+//有房源的城市
+const HOUSE_CITY = ['北京','上海','广州','深圳']
+
 export default class CityList extends Component {
   state = {
     cityList: {},
@@ -66,6 +69,17 @@ export default class CityList extends Component {
     <div className="name">上海</div>
   </div>
 */
+
+ changeCity(curCity){
+  console.log(curCity);
+  const {label,value} = curCity
+  if (HOUSE_CITY.indexOf(label)>-1) {
+    localStorage.setItem('hkzf_city',JSON.stringify({label,value}))
+    this.props.history.go(-1)
+  }else{
+    Toast.info("暂无房屋数据!", 3,null,false);
+  }
+}
   rowRenderer=({
     key, // Unique key within array of rows
     index, // Index of row within collection
@@ -81,7 +95,7 @@ export default class CityList extends Component {
         <div className="title">{formatCityIndex(letter)}</div>
         {/* <div className="name">上海</div> */}
         {
-          cityList[letter].map(item=><div className="name" key={item.value}>{item.label}</div>)
+          cityList[letter].map(item=><div className="name" key={item.value} onClick={()=>this.changeCity(item)}>{item.label}</div>)
         }
       </div>
     );
@@ -159,13 +173,7 @@ export default class CityList extends Component {
     return (
       <div className="cityList">
         {/*  顶部导航栏 */}
-        <NavBar
-          mode="light"
-          icon={<i className="iconfont icon-back" />}
-          onLeftClick={() => this.props.history.go("-1")}
-        >
-          城市选择
-        </NavBar>
+        <NavHeader>城市选择</NavHeader>
         <AutoSizer>
           {({ height, width }) => (
             <List
